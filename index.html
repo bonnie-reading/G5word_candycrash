@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>圈詞消消樂 萬用產生器</title>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F1ECFF;--panel:#fff;--ink:#2A1B4D;--muted:#6B5E8C;--line:#DDD2F7;--accent:#FF4F8B;--accent2:#FF9A3C;--board:#E6DDFB;--choco1:#4B3621;--choco2:#3A2815;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1B0F36;--panel:#2A1A50;--ink:#F5EFFF;--muted:#BBAAE3;--line:#43317D;--board:#1F1240}}
+:root[data-theme="dark"]{--bg:#1B0F36;--panel:#2A1A50;--ink:#F5EFFF;--muted:#BBAAE3;--line:#43317D;--board:#1F1240}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Huninn","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.6;min-height:100vh}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+h1{margin:0;font-size:clamp(24px,4vw,34px);line-height:1.2;letter-spacing:.04em}
+h1 span{background:linear-gradient(90deg,#FF4F8B,#FF9A3C 50%,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{margin:2px 0 0;color:var(--muted);font-size:13px}
+.btn{border:0;border-radius:14px;padding:10px 16px;font-weight:700;cursor:pointer;transition:transform .12s}
+.btn:active{transform:translateY(2px)}
+.btn-ghost{background:var(--panel);border:2px solid var(--line)}
+.btn-main{background:linear-gradient(135deg,#FF5C8A,#FF9A3C);color:#fff;box-shadow:0 4px 0 #C93A66;text-shadow:0 1px 0 rgba(0,0,0,.2)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;align-items:end;background:var(--panel);border:2px solid var(--line);border-radius:20px;padding:14px;margin-bottom:18px}
+.controls label.f{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+select{width:100%;padding:9px 10px;border-radius:12px;border:2px solid var(--line);background:var(--bg);font-weight:700}
+.sw{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer;padding:9px 0}
+.sw input{width:20px;height:20px;accent-color:var(--accent)}
+.layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:18px}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:24px;padding:18px}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+.bar h2{margin:0;font-size:22px}
+.pill{background:var(--bg);border:2px solid var(--line);border-radius:999px;padding:2px 12px;font-size:13px;font-weight:700}
+.pill b{color:var(--accent);font-size:16px}
+.board-wrap{position:relative;max-width:520px;margin:0 auto}
+#grid{display:grid;gap:10px;padding:12px;background:var(--board);border-radius:22px;aspect-ratio:1;user-select:none;-webkit-user-select:none}
+.tile{position:relative;border:0;border-radius:18px;font-family:inherit;font-weight:900;font-size:clamp(24px,6.5vw,40px);cursor:pointer;color:var(--ink);
+background:linear-gradient(160deg,#fff,#EFE8FF);
+box-shadow:inset 0 3px 0 rgba(255,255,255,.7),inset 0 -6px 0 rgba(60,30,120,.14),0 5px 0 rgba(60,30,120,.2);
+transition:transform .12s,box-shadow .12s,opacity .25s}
+.tile.col{background:linear-gradient(160deg,var(--c1),var(--c2));color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25);
+box-shadow:inset 0 3px 0 rgba(255,255,255,.5),inset 0 -6px 0 rgba(0,0,0,.2),0 5px 0 rgba(0,0,0,.22)}
+.tile.col.dk{color:#4A3200;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.tile::after{content:"";position:absolute;left:14%;top:9%;width:34%;height:16%;border-radius:50%;background:rgba(255,255,255,.55);transform:rotate(-20deg);pointer-events:none}
+.tile:hover:not(:disabled){transform:translateY(-2px)}
+.tile.sel{transform:translateY(3px) scale(1.06);outline:4px solid #FFD23F;outline-offset:1px;animation:pop .28s ease-out;z-index:2}
+@keyframes pop{50%{transform:translateY(0) scale(1.16)}}
+.tile.done{background:var(--board);color:transparent;text-shadow:none;box-shadow:inset 0 3px 8px rgba(0,0,0,.18);transform:scale(.88);cursor:default}
+.tile.done::after{display:none}
+.tile.choco{background:repeating-linear-gradient(45deg,var(--choco1),var(--choco1) 9px,var(--choco2) 9px,var(--choco2) 18px);box-shadow:inset 0 3px 8px rgba(0,0,0,.5);cursor:default;font-size:22px;color:#9C7A5B}
+.tile.choco::after{display:none}
+.lead{position:absolute;top:-6px;left:-6px;width:22px;height:22px;border-radius:50%;background:#fff;color:var(--accent);font-size:12px;display:grid;place-items:center;box-shadow:0 2px 0 rgba(0,0,0,.25);text-shadow:none;z-index:1}
+.hint{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center;margin:14px 0 0;color:var(--muted);font-size:12px}
+.win{position:absolute;inset:0;display:none;place-items:center;text-align:center;background:rgba(40,20,90,.82);border-radius:22px;color:#fff;padding:20px;z-index:5}
+.win.show{display:grid}
+.win h3{font-size:28px;margin:0 0 6px}
+.goal{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-radius:18px;border:2px solid var(--line);margin-bottom:10px}
+.goal .w{display:flex;align-items:center;gap:12px;font-weight:900;font-size:30px;line-height:1.2}
+.dot{width:22px;height:22px;border-radius:50%;background:linear-gradient(160deg,var(--c1),var(--c2));box-shadow:inset 0 2px 0 rgba(255,255,255,.55)}
+.goal.off{opacity:.5}.goal.off .w span.t{text-decoration:line-through}
+.mini{border:2px solid var(--line);background:var(--bg);border-radius:10px;padding:7px 13px;font-size:16px;font-weight:700;cursor:pointer}
+.perk{display:flex;gap:10px;padding:10px;border-radius:16px;background:var(--bg);font-size:13px;margin-top:8px}
+.perk .e{font-size:22px}
+dialog{border:0;border-radius:26px;padding:0;max-width:min(560px,94vw);width:100%;background:var(--panel);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(25,10,60,.55);backdrop-filter:blur(3px)}
+.m{padding:24px;text-align:center;border-top:8px solid var(--accent2);border-radius:26px}
+.m h3{font-size:48px;line-height:1.2;margin:0 0 10px}
+.m .box{background:var(--bg);border-radius:16px;padding:14px;text-align:left;margin-bottom:16px;font-size:24px;line-height:1.7}
+.m .box small{display:block;color:var(--muted);font-weight:700;font-size:16px;margin-bottom:2px}
+.m .box p{margin:0 0 10px}.m .box p:last-child{margin:0}
+.pic{font-size:68px;line-height:1;width:116px;height:116px;margin:0 auto 6px;display:grid;place-items:center;border-radius:30px;background:linear-gradient(160deg,var(--bg),var(--board));box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 4px 0 var(--line)}
+.spk-row{display:flex;gap:6px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.spk-row .mini{padding:7px 14px;font-size:16px}
+.gb{display:flex;gap:8px}.em{font-size:32px}
+mark{background:#FFD23F;color:#4A3200;border-radius:6px;padding:0 3px;font-weight:900}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.print-only{display:none}
+@media print{body{background:#fff;color:#000}.screen{display:none!important}.print-only{display:block}
+.pg{padding:8px;font-family:inherit}.pg h1{font-size:22px}
+.pcols{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px}
+#pgrid{display:grid;gap:6px;border:2px solid #000;padding:8px;aspect-ratio:1;max-width:340px;margin:0 auto}
+#pgrid div{border:1px solid #888;display:grid;place-items:center;font-weight:700;font-size:20px;aspect-ratio:1}
+#pgrid .c{background:#ccc;font-size:12px}
+.pt{display:flex;gap:8px;align-items:center;border-bottom:1px solid #ddd;padding:6px 0;font-size:14px}
+#wgrid{display:grid;grid-template-columns:repeat(12,1fr);border-left:2px solid #000;border-top:2px solid #000;margin-top:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#wgrid div{aspect-ratio:1;border-right:2px solid #000;border-bottom:2px solid #000;background:linear-gradient(#0000 49%,#bbb 49% 51%,#0000 51%),linear-gradient(90deg,#0000 49%,#bbb 49% 51%,#0000 51%)}
+.rule{background:#f3f3f3;border:1px solid #ccc;padding:8px;font-size:12px;border-radius:6px}}
+</style>
+</head>
+<body>
+<div class="wrap screen">
+  <header>
+    <div>
+      <h1>🍬 <span>圈詞消消樂</span></h1>
+      <p class="sub">翰林國小國語五上　第一～六課</p>
+    </div>
+    <button class="btn btn-ghost" onclick="window.print()">🖨️ 列印學習單</button>
+  </header>
+
+  <section class="controls" aria-label="出題設定">
+    <div><label class="f" for="lesson">課次</label>
+      <select id="lesson">
+        <option value="1">第一課　你我之間</option><option value="2">第二課　風起，大家都在</option><option value="3">第三課　廉頗與藺相如</option>
+        <option value="4">第四課　來場快樂的桌遊</option><option value="5">第五課　超級英雄</option><option value="6">第六課　世足賽的贏家</option>
+      </select></div>
+    <div><label class="f" for="diff">難度</label>
+      <select id="diff"><option value="easy">初階：4×4，巧克力遮蔽</option><option value="medium" selected>中階：4×4，混合干擾</option><option value="hard">挑戰：5×5，全是干擾字</option></select></div>
+    <label class="sw"><input type="checkbox" id="scaf" checked> 糖果配色與詞首提示</label>
+    <label class="sw"><input type="checkbox" id="voice" checked> 🔊 點字就發音</label><button class="btn btn-main" id="regen">🔄 重新洗牌</button>
+  </section>
+
+  <div class="layout">
+    <section class="card">
+      <div class="bar"><h2>消除盤面</h2><span class="pill">剩下 <b id="left">0</b> 個詞</span></div>
+      <div class="board-wrap">
+        <div id="grid" role="group" aria-label="糖果棋盤"></div>
+        <div class="win" id="win" role="status"><div><div style="font-size:54px">🌈</div><h3>全部引爆！</h3><p>彩虹糖果大獎是你的了</p><button class="btn btn-main" onclick="generate()">再玩一關</button></div></div>
+      </div>
+      <p class="hint"><span>點相鄰的糖果，連成詞就會消除</span><span>🍫 巧克力塊不能點</span></p>
+    </section>
+
+    <aside>
+      <div class="card">
+        <div class="bar"><h2>本關目標</h2><span class="pill" id="badge"></span></div>
+        <div id="goals"></div>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <h2 style="font-size:16px;margin:0 0 4px">特殊糖果</h2>
+        <div class="perk"><span class="e">🍭</span><span><b>條紋糖果</b>　說出詞義或造一個短句，全班拍手加 1 分。</span></div>
+        <div class="perk"><span class="e">🌈</span><span><b>彩虹糖果</b>　清空整個棋盤，可換一次自選任務。</span></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<dialog id="dlg"><div class="m">
+  <div class="pic" id="mp"></div><h3 id="mw"></h3><div class="spk-row"><button class="mini" onclick="sayList([$('mw').textContent])">🔊 詞語</button><button class="mini" onclick="sayList([$('md').textContent])">🔊 解釋</button><button class="mini" onclick="sayList([$('ms').textContent])">🔊 例句</button><button class="mini" onclick="sayList([$('mw').textContent,$('md').textContent,$('ms').textContent])">▶ 全部</button></div>
+  <div class="box"><small>白話解釋</small><p id="md"></p><small>例句</small><p id="ms"></p></div>
+  <button class="btn btn-main" style="width:100%" onclick="dlg.close()">繼續挑戰</button>
+</div></dialog>
+
+<div class="print-only"><div class="pg">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:8px">
+    <div><h1>圈詞消消樂 學習單</h1><div id="ptitle"></div></div><div style="font-size:13px">五年____班　座號：____　姓名：________</div></div>
+  <p class="rule"><b>任務規則：</b>在棋盤中找出相鄰（橫向或直向）能組成生詞的字，用色筆框起來，唸出來後在右側打勾。黑色格子不能連線。</p>
+  <div class="pcols"><div><h3 style="text-align:center">糖果棋盤</h3><div id="pgrid"></div></div>
+  <div><h3>今日目標</h3><div id="ptargets"></div></div></div>
+  <div style="margin-top:20px;font-size:15px;font-weight:700">⭐ 加分挑戰：選一個你消除的詞，寫一個通順的短句。<br>我選的詞是【　　　　　】</div><div id="wgrid"></div>
+</div></div>
+
+<script>
+// 詞庫：詞 | 解釋 | 例句
+const RAW={
+1:["第一課　你我之間",`彼此|你和我，互相對看或互相關心。|好朋友之間要彼此關心、互相幫忙。
+關係|兩個人或事物之間連在一起的感情或連結。|我們是同班同學，感情是非常好的關係。
+融洽|相處得非常好，像巧克力融化在一起一樣甜甜的。|大家在班上相處得非常融洽，從不吵架。
+周遭|在你前後左右圍繞著的所有人和環境。|坐在位子上，周遭都是認真讀書的同學。
+擁抱|張開雙手緊緊抱住對方。|當妹妹難過哭泣時，媽媽給她一個溫暖的擁抱。
+堅定|像石頭一樣硬，意志專一不搖晃。|他下定堅定的決心，今天一定要把作業完成。
+耐勞|不怕辛苦、能堅持把工作做完。|打掃時間，小明非常吃苦耐勞，把地板擦得乾乾淨淨。
+真諦|最重要的秘密與核心道理。|這本書告訴我們，友誼的真諦就是真心包容。
+刷牙|拿牙刷把牙齒洗乾淨。|每天早上起床和睡前，我們都要認真刷牙。
+牙膏|配合牙刷使用的軟軟潔牙膏。|擠出一小點草莓牙膏，開始認真刷牙。
+協助|大家把力量合在一起幫忙。|謝謝同學在我受傷時給予協助，幫我拿書包。
+提供|大方拿出自己的東西給別人用。|老師提供許多有趣的圖書，讓我們在課餘時間閱讀。`],
+2:["第二課　風起，大家都在",`直笛|用嘴巴吹、手指按洞洞的直立管樂器。|音樂課時，全班一起拿出直笛練習吹奏。
+吹奏|用嘴巴吐氣讓管樂器發出聲音。|台上表演者賣力吹奏著動聽的曲子。
+簡單|一點都不難，一下下就學會了。|這道題目非常簡單，我一秒鐘就想出答案了。
+旋律|高高低低連起來好聽有節奏的曲調。|收音機播放著輕快的旋律，讓人心情變好。
+熟悉|看過或聽過很多次，大腦記得很清楚。|聽到這首熟悉的校歌，大家開心跟著唱。
+和諧|聲音或感情配合得剛剛好，聽起來舒服不刺耳。|大家一起合唱，高音與低音非常和諧。
+齊奏|大家拿著樂器同時吹奏一模一樣的曲子。|全班齊奏直笛，聲音十分宏亮好聽。
+縈繞|聲音或香氣在周圍一圈圈繞來繞去，久不散開。|美妙的笛聲在校園走廊裡久久縈繞。
+樹梢|大樹最頂端、最尖最細的小枝條。|小鳥停在高高的樹梢上跳舞唱歌。
+走廊|教室外面有屋簷可以遮雨的通道。|下課時請在走廊上慢步行走，不要奔跑。
+階梯|一格一格踩著往上爬或往下走的樓梯。|我們一步一步踩著階梯走上三樓音樂教室。
+花絮|像棉毛一樣飛舞的東西，或活動幕後有趣的小故事。|影片最後播放了拍攝過程中的精彩花絮。
+必須|一定要這樣做，不能漏掉的規則。|進圖書館閱讀時，大家必須保持安靜。
+隊伍|大家排成一整排有順序的人群。|升旗典禮時，全班排成整齊的隊伍走到操場。
+威力|大家把力量合在一起產生的超級強大力量。|團結的力量發揮了強大的威力，我們贏得了比賽。
+獨鬥|只有自己一個人孤單地努力，沒有幫手。|大掃除需要大家合作，單打獨鬥會非常辛苦。`],
+3:["第三課　廉頗與藺相如",`戰國|很久很久以前中國很多小國家天天打仗的時期。|在戰國時代，許多英雄豪傑靠著智慧保護國家。
+諸侯|古代幫國王管理大片城堡和土地的地方領袖。|諸侯們聚在一起討論如何維持國家的安全。
+羞辱|當眾嘲笑或欺負別人，讓人覺得非常丟臉難堪。|我們不應該用難聽的話去羞辱別人。
+懦弱|遇到事情就膽小害怕，不敢面對。|面對困難時要勇敢，不能展現出懦弱的態度。
+羞恥|覺得自己的行為很不對、很難為情、很丟臉。|做錯事卻不敢承認，是讓人感到羞恥的行為。
+權勢|強大的權力和威風，可以控制別人的力量。|他不靠父母的權勢，憑自己的努力獲得成功。
+坐鎮|親自在大後方或重要關頭指揮控場，讓人安心。|有經驗豐富的老將軍在城裡坐鎮，大家都很安心。
+國君|一個國家的最高統治者（國王）。|臣子們恭敬地向國君報告國家的大事。
+羞愧|知道自己做錯事，心裡覺得很抱歉、對不起別人。|發現自己誤會了同學，他感到非常羞愧。
+同心|大家心連心，把力量合在一起共同完成目標。|只要大家同心協力，再難的任務也能順利完成。
+完璧|借來的珍貴玉石完整無損地保住。|他做事細心，終於完璧歸趙。
+請罪|誠懇向對方道歉，承認自己的錯誤。|他帶著歉意親自登門請罪。`],
+4:["第四課　來場快樂的桌遊",`大廳|很大、可以讓大家聚在一起的寬敞房間。|桌遊店的大廳裡坐滿了歡樂的玩家。
+年齡|你今年幾歲了。|這款桌遊不分年齡，大人小孩都可以一起玩。
+氣氛|你感覺到周圍是快樂還是緊張的情緒與環境。|派對上充滿了歡樂愉快的氣氛。
+春筍|雨後泥土裡快速長出來的嫩竹子。|近年來各式各樣的桌遊店如雨後春筍般出現。
+根據|一定要依照這個標準或規則去做。|我們要根據遊戲說明書的規則來進行遊戲。
+例如|拿一個具體例子出來做示範或說明。|這家店賣很多水果，例如蘋果、香蕉和葡萄。
+單純|好簡單、乾乾淨淨、沒有複雜的心思。|這款桌遊的規則非常單純，一下子就上手了。
+下棋|在棋盤上移動棋子進行對決的遊戲。|爺爺喜歡在樹下和鄰居一起下棋聊天。
+牌局|進行撲克牌或桌上卡牌對決的活動。|過年時全家人開心地展開歡樂的牌局。
+富足|有很多、很滿、心裡感到很充實開心。|這場比賽讓大家的精神收穫非常富足。`],
+5:["第五課　超級英雄",`授權|獲得創作者或法律同意給予使用的權利。|使用這張圖片前，必須先獲得創作者的授權。
+違法|違反政府或國家的法律規則。|在電影院偷拍電影並散布是違法的行為。
+侵犯|傷害或佔用別人的權利與自由。|未經同意公開別人的日記，會侵犯個人的隱私權。
+盜版|沒有經過同意，非法複製或翻印別人的作品。|我們應該支持正版，絕不購買盜版商品。
+剪輯|把影片或聲音切開並重新組合在一起。|他把旅遊的照片和影片剪輯成一段精彩的短片。
+營利|為了賺取金錢和商業利益。|這場音樂會是公益性質，絕不進行任何商業營利。
+創作|發揮想像力做出新的作品。|作家花了整整一年時間，創作成一本動人的小說。
+出版|把作品印成書籍或發行公開給大眾看。|這本書出版後，深受全台國小學生的喜愛。
+權益|依法應該享受的權利與利益。|我們有責任維護自己的合法權益。
+傳播|把訊息或知識廣泛散布給很多人知道。|網路讓訊息的傳播速度變得非常迅速。
+著作|創作者用心寫出來的作品。|我們要尊重創作者的著作與付出。
+心血|花費大量的精力、時間與心思。|這幅美麗的畫作凝聚了畫家多年的心血。`],
+6:["第六課　世足賽的贏家",`紡織|把棉花或線織成布料的工業與過程。|臺灣的紡織技術非常發達，外銷全球。
+銷毀|把它燒掉或破壞，徹底弄掉。|過期的食品必須立刻銷毀，不能再販售。
+廢棄|用完不要、扔掉的垃圾與廢物。|做好垃圾分類，避免隨意廢棄資源。
+融化|固體受熱變成液體。|太陽出來了，冰淇淋很快就融化了。
+抽絲|把塑膠或蠶繭拉出一條條細細的線。|工廠將寶特瓶加熱後抽絲，做成軟軟的紗線。
+紗線|用來織布的細長線條。|紡織廠用這些彩色的紗線織出一捲捲漂亮的布料。
+濕潤|潮潮的、微微帶有水份不乾燥。|經過雨水滋潤後，花園裡的土地變得非常濕潤。
+擺脫|甩掉、離開不好的狀況或限制。|透過持續練習，他終於擺脫了緊張的情緒。
+研發|研究並發明製造出全新的產品。|這家公司研發出最新的省電技術，受到好評。
+回收|把舊的東西收回來重新利用。|做好資源回收，可以為地球減輕負擔。
+永續|長長久久、可以持續經營與保護環境。|注重環保才能達成地球資源的永續發展。`]};
+const VOCAB={};
+for(const k in RAW){VOCAB[k]={title:RAW[k][0],words:RAW[k][1].split("\n").map(l=>{const p=l.split("|");return{word:p[0],def:p[1],sentence:p[2]}})}}
+
+const PIC={彼此:'🤝',關係:'🔗',融洽:'😊',周遭:'👥',擁抱:'🤗',堅定:'💪',耐勞:'🧹',真諦:'💎',刷牙:'🪥',牙膏:'🦷',協助:'🙌',提供:'🎁',直笛:'🎶',吹奏:'🎵',簡單:'✅',旋律:'🎼',熟悉:'🏫',和諧:'🎶',齊奏:'🎺',縈繞:'🌀',樹梢:'🌳',走廊:'🏫',階梯:'🪜',花絮:'🎬',必須:'❗',隊伍:'🚶',威力:'⚡',獨鬥:'🧍',戰國:'⚔️',諸侯:'🏯',羞辱:'😣',懦弱:'😨',羞恥:'😳',權勢:'👑',坐鎮:'🛡️',國君:'🤴',羞愧:'🙈',同心:'❤️',完璧:'💠',請罪:'🙇',大廳:'🏛️',年齡:'🎂',氣氛:'🎉',春筍:'🎋',根據:'📜',例如:'💡',單純:'🍃',下棋:'♟️',牌局:'🃏',富足:'🌟',授權:'✍️',違法:'🚫',侵犯:'⛔',盜版:'📀',剪輯:'✂️',營利:'💰',創作:'🎨',出版:'📚',權益:'⚖️',傳播:'📡',著作:'✒️',心血:'🔥',紡織:'🧵',銷毀:'🔥',廢棄:'🗑️',融化:'🍦',抽絲:'🧶',紗線:'🧶',濕潤:'💧',擺脫:'⛓️',研發:'🔬',回收:'♻️',永續:'🌏'};
+const synth=window.speechSynthesis;
+let zhVoice=null;
+function pickVoice(){if(!synth)return;zhVoice=synth.getVoices().find(v=>/zh[-_]TW/i.test(v.lang))||synth.getVoices().find(v=>/^zh/i.test(v.lang))||null}
+if(synth){pickVoice();synth.onvoiceschanged=pickVoice}
+function sayList(arr){
+  if(!synth)return;
+  synth.cancel();
+  arr.forEach((t,i)=>{const u=new SpeechSynthesisUtterance(t);u.lang='zh-TW';u.rate=i===0?.8:.9;if(zhVoice)u.voice=zhVoice;synth.speak(u)});
+}
+function say(t){if($('voice').checked)sayList([t])}
+const COLORS=[["#FF6B95","#E02A63"],["#FFA53D","#EE6A00"],["#7ED957","#3BA62A"],["#52C5FF","#1B8CE0"],["#A970FF","#6A34D8"],["#FFD93D","#F0AE00",1]];
+const FILL=["大","友","同","心","好","學","明","日","生","走","愛","力"];
+const $=id=>document.getElementById(id);
+const lesson=$("lesson"),diff=$("diff"),scaf=$("scaf"),gridEl=$("grid"),dlg=$("dlg");
+let board=[],N=4,targets=[],sel=[],cleared=new Set();
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+function generate(){
+  const L=VOCAB[lesson.value],d=diff.value;
+  N=d==="hard"?5:4;
+  gridEl.style.gridTemplateColumns=`repeat(${N},minmax(0,1fr))`;
+  const cnt=d==="easy"?4:d==="medium"?6:7;
+  targets=shuffle(L.words).slice(0,Math.min(cnt,L.words.length));
+  cleared.clear();sel=[];$("win").classList.remove("show");
+  let ok=false;
+  for(let t=0;t<40&&!ok;t++){ok=place(d)}
+  render();renderPrint();
+}
+function place(d){
+  board=Array.from({length:N},()=>Array(N).fill(null));
+  for(let i=0;i<targets.length;i++){
+    const w=targets[i].word;let done=false;
+    for(let a=0;a<150&&!done;a++){
+      const h=Math.random()>.5,r=Math.floor(Math.random()*(h?N:N-w.length+1)),c=Math.floor(Math.random()*(h?N-w.length+1:N));
+      let fit=true;
+      for(let k=0;k<w.length;k++)if(board[h?r:r+k][h?c+k:c]){fit=false;break}
+      if(fit){for(let k=0;k<w.length;k++)board[h?r:r+k][h?c+k:c]={type:"letter",char:w[k],word:w,lead:k===0,ci:i%COLORS.length};done=true}
+    }
+    if(!done)return false;
+  }
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(!board[r][c]){
+    const f={type:"filler",char:FILL[Math.floor(Math.random()*FILL.length)]};
+    board[r][c]=d==="easy"?{type:"choco"}:d==="medium"&&Math.random()>.4?{type:"choco"}:f;
+  }
+  return true;
+}
+function render(){
+  const s=scaf.checked;
+  $("badge").textContent=VOCAB[lesson.value].title.split("　")[0];
+  $("left").textContent=targets.length-cleared.size;
+  $("goals").innerHTML="";
+  targets.forEach((t,i)=>{
+    const c=COLORS[i%COLORS.length],off=cleared.has(t.word),g=document.createElement("div");
+    g.className="goal"+(off?" off":"");
+    g.innerHTML=`<div class="w"><i class="dot" style="--c1:${c[0]};--c2:${c[1]}"></i><span class="t">${t.word}</span><span class="em">${PIC[t.word]||''}</span></div><div class="gb"><button class="mini" aria-label="唸 ${t.word}" onclick="sayList(['${t.word}'])">🔊</button><button class="mini" onclick="meaning('${t.word}')">語意</button></div>`;
+    $("goals").appendChild(g);
+  });
+  gridEl.innerHTML="";
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const d=board[r][c],b=document.createElement("button");
+    b.className="tile";
+    if(d.type==="choco"){b.classList.add("choco");b.textContent="🍫";b.disabled=true;b.setAttribute("aria-label","巧克力塊")}
+    else{
+      const done=d.type==="letter"&&cleared.has(d.word),on=sel.some(p=>p.r===r&&p.c===c);
+      b.textContent=d.char;
+      if(done){b.classList.add("done");b.disabled=true}
+      else{
+        if(s&&d.type==="letter"){const k=COLORS[d.ci];b.classList.add("col");if(k[2])b.classList.add("dk");b.style.setProperty("--c1",k[0]);b.style.setProperty("--c2",k[1]);
+          if(d.lead){const l=document.createElement("span");l.className="lead";l.textContent="1";b.appendChild(l)}}
+        if(on)b.classList.add("sel");
+        b.onclick=()=>click(r,c);
+      }
+    }
+    gridEl.appendChild(b);
+  }
+}
+function click(r,c){
+  say(board[r][c].char);
+  const i=sel.findIndex(p=>p.r===r&&p.c===c);
+  if(i>=0){sel.splice(i,1);return render()}
+  if(sel.length){const l=sel[sel.length-1];if(Math.abs(l.r-r)+Math.abs(l.c-c)!==1){sel=[{r,c}];return render()}}
+  sel.push({r,c});
+  const word=sel.map(p=>board[p.r][p.c].char).join("");
+  const m=targets.find(t=>t.word===word&&!cleared.has(t.word));
+  if(m){
+    cleared.add(m.word);sel=[];render();meaning(m.word);
+    if(cleared.size===targets.length)$("win").classList.add("show");
+  }else render();
+}
+function meaning(w){
+  const f=VOCAB[lesson.value].words.find(x=>x.word===w);if(!f)return;
+  $("mp").textContent=PIC[f.word]||'🍬';$("mw").textContent=f.word;$("md").textContent=f.def;$("ms").innerHTML=f.sentence.replace(f.word,'<mark>'+f.word+'</mark>');dlg.showModal();
+  if($('voice').checked)sayList([f.word,f.def,f.sentence]);
+}
+function renderPrint(){
+  $("ptitle").textContent=VOCAB[lesson.value].title;
+  const wg=$("wgrid");if(!wg.children.length)for(let i=0;i<36;i++)wg.appendChild(document.createElement("div"));
+  const g=$("pgrid");g.innerHTML="";g.style.gridTemplateColumns=`repeat(${N},1fr)`;
+  board.forEach(row=>row.forEach(d=>{const x=document.createElement("div");if(d.type==="choco"){x.className="c";x.textContent="🍫"}else x.textContent=d.char;g.appendChild(x)}));
+  $("ptargets").innerHTML=targets.map((t,i)=>`<div class="pt"><input type="checkbox"><b>${i+1}. ${t.word}</b><span style="font-size:12px;color:#666">${t.def.slice(0,16)}…</span></div>`).join("");
+}
+lesson.onchange=diff.onchange=$("regen").onclick=generate;
+scaf.onchange=render;
+dlg.onclose=()=>{if(synth)synth.cancel()};
+if(!synth){$('voice').checked=false;$('voice').disabled=true}
+generate();
+</script>
+</body>
+</html>
